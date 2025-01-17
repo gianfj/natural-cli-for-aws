@@ -3,10 +3,14 @@
 ## Overview
 This project integrates OpenAI’s GPT capabilities with AWS CLI, enabling users to interact with AWS services using natural language prompts. The tool translates user-friendly prompts into actionable AWS CLI commands and executes them seamlessly.
 
+## Disclaimer
+**Use this tool at your own risk. Automating AWS CLI commands through natural language processing can lead to unintended or unpredictable results. We are not responsible for any data loss, resource misconfiguration, or unexpected costs incurred while using this tool.**
+
 ## Features
 - **Natural Language Processing**: Leverage OpenAI’s GPT model to interpret user commands.
 - **AWS CLI Integration**: Automatically execute AWS CLI commands based on generated outputs.
 - **Error Handling**: Includes checks to ensure environment variables and dependencies are properly configured.
+- **Blocklist**: Prevent disruptive commands to be run automatically
 
 ## Prerequisites
 
