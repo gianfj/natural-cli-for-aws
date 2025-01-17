@@ -1,0 +1,69 @@
+#!/home/gian/.pyenv/shims/python
+import os
+from openai import OpenAI
+import subprocess
+import sys
+import shlex
+
+# Initialize the OpenAI client
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+def execute_aws_cli_from_openai(prompt):
+    try:
+        if not client.api_key:
+            print("Error: OPENAI_API_KEY environment variable not set.")
+            return
+
+        response = client.chat.completions.create(
+            model="gpt-4-turbo",
+            messages=[
+                {"role": "system", "content": "You are an expert in the AWS CLI. You will only output the AWS CLI command related to the question made, without any explanation or text. Ensure only non-destructive query commands are generated. do not output markdown, only output text format of the aws cli command."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+
+        aws_command = response.choices[0].message.content.strip()
+
+        if not aws_command:
+            print("Error: The OpenAI API did not return any output.")
+            return
+        print(f"Command: {aws_command}")
+        # Blacklist of destructive AWS CLI commands
+        blacklist = [
+            "delete", "remove", "terminate", "shutdown", "stop", "kill",
+            "modify", "update", "put", "create", "replace", "detach", "disassociate"
+        ]
+
+        # Extract the main command (first two words) for checking
+        command_parts = aws_command.split()
+        main_command = " ".join(command_parts[:2]).lower()
+
+        # Check if the main command contains any blacklisted words
+        if any(word in main_command for word in blacklist):
+            print(f"Warning: The following command may be destructive or change configurations.")
+            print(f"Command: {aws_command}")
+            print("If you want to execute it, please copy and run it manually.")
+            return
+
+        # Execute the command
+        process = subprocess.run(shlex.split(aws_command), capture_output=True, text=True)
+
+        # Print the output or error
+        if process.returncode == 0:
+            print(process.stdout)
+        else:
+            print("Error executing the command:")
+            print(process.stderr)
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python execute_aws_cli.py Your AWS CLI task description here")
+        sys.exit(1)
+
+    user_prompt = " ".join(sys.argv[1:])
+    execute_aws_cli_from_openai(user_prompt)
+
